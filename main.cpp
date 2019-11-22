@@ -10,10 +10,10 @@ int main() {
     cout << endl;
 
 
-//    LR1 lr1;
-//    lr1.init();
-//
-//    lr1.analyze("(((n+n)*(n-n))-((n-n)/(n/n)))");
+    LR1 lr1;
+    lr1.init();
+
+    lr1.analyze("(((n+n)*(n-n))-((n-n)/(n/n)))");
     cout << endl;
     return 0;
 }
