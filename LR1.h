@@ -48,12 +48,14 @@ struct FuncState {
 // 文法4.7 p117
 class LR1 {
 public:
-    const string BEGIN_SYMBOL = "E";
+    const string BEGIN_SYMBOL = "S";
     map<string, vector<string>> funcsMap;
     vector<pair<string, string>> funcPairs;
     map<string, set<string>> first;
-    set<string> T{"*", "i", "="};
-    set<string> N{"E", "S", "L", "R"};
+    set<string> T{"+", "-", "*", "/", "(", ")", "n"};
+    set<string> N{"S", "E", "T", "F"};
+    FuncState beginFunc = FuncState("S", "E", 0, "$");
+
     vector<set<FuncState>> closures;
     map<pair<int, string>, int> gotoMap;
     //map[<state nextCh>] = <"S", nextState> / <"R",reduceFuncNo> / <"Accept",>
@@ -62,36 +64,41 @@ public:
     void initFunction() {
 
         /*
-         * 0 E->S
-         * 1 S->L=R
-         * 2 S->R
-         * 3 L->*R
-         * 4 L->i
-         * 5 R->L
+         * 0 S->E
+         * 1 E->E+T
+         * 2 E->E-T
+         * 3 E->T
+         * 4 T->T*F
+         * 5 T->T/F
+         * 6 T->F
+         * 7 F->(E)
+         * 8 F->n
          */
         auto *v = new vector<string>();
-        v->push_back("S");
-        funcsMap["E"] = *v;
-
-        //E'->S
-        v = new vector<string>();
-        v->push_back("L=R");
-        v->push_back("R");
+        v->push_back("E");
         funcsMap["S"] = *v;
 
-        //T'->D
         v = new vector<string>();
-        v->push_back("*R");
-        v->push_back("i");
-        funcsMap["L"] = *v;
+        v->push_back("E+T");
+        v->push_back("E-T");
+        v->push_back("T");
+        funcsMap["E"] = *v;
+
 
         v = new vector<string>();
-        v->push_back("L");
-        funcsMap["R"] = *v;
+        v->push_back("T*F");
+        v->push_back("T/F");
+        v->push_back("F");
+        funcsMap["T"] = *v;
+
+        v = new vector<string>();
+        v->push_back("(E)");
+        v->push_back("n");
+        funcsMap["F"] = *v;
 
         for (auto i: funcsMap) {
             for (auto j:i.second) {
-                funcPairs.push_back(pair(i.first, j));
+                funcPairs.emplace_back(i.first, j);
             }
         }
     }
@@ -254,7 +261,6 @@ public:
 
     void makeClosure() {
         set<FuncState> state0;
-        FuncState beginFunc("E", "S", 0, "$");
         state0.insert(beginFunc);
         state0 = getStateClosure(state0);
         closures.push_back(state0);
@@ -313,12 +319,14 @@ public:
         stack<string> symbol_stack;
         stack<int> state_stack;
         state_stack.push(0);
+        symbol_stack.push("-");
         int analyze_ptr = 0;
         auto a = ana_str.substr(0, 1);
         int S;
         do {
             S = state_stack.top();
             a = ana_str.substr(analyze_ptr, 1);
+            cout << ana_str.substr(analyze_ptr) << "\t";
             if (actionMap.find(pair(S, a)) != actionMap.end()) {
                 auto right = actionMap[pair(S, a)];
                 cout << "<" << S << "," << a << ">:<" << right.first << "," << right.second
@@ -329,7 +337,7 @@ public:
                     state_stack.push(S_);
                     analyze_ptr++;
                 } else if (right.first == "R") {
-                    if (right.second == 0) {
+                    if (funcPairs[right.second].first == BEGIN_SYMBOL) {
                         cout << "accept" << endl;
                         return;
                     }
@@ -343,7 +351,8 @@ public:
                         state_stack.push(gotoMap[pair(S_, funcPairs.at(right.second).first)]);
                     }
                 }
-
+                cout << "state:" << state_stack.top() << " size:" << state_stack.size() << "\tsymbol:"
+                     << symbol_stack.top() << " size:" << symbol_stack.size() << endl;
             } else {
                 cout << "error" << endl;
                 break;
@@ -396,6 +405,12 @@ public:
         cout << endl;
     }
 
+    void printFunc() {
+        for (auto i:funcPairs) {
+            cout << i.first << "->" << i.second << endl;
+        }
+    }
+
 public:
     void init() {
         this->initFunction();
@@ -405,6 +420,7 @@ public:
         this->printClosure();
         this->printActionMap();
         this->printGotoMap();
+        this->printFunc();
     }
 };
 

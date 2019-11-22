@@ -33,7 +33,7 @@ class LL1 {
 
 public:
     const string BEGIN_SYMBOL = "E";
-    set<string> T{"#", "+", "*", "i", "(", ")", "$"};
+    set<string> T{"#", "+", "-", "*", "/", "n", "(", ")", "$"};
     set<string> N{"E", "S", "T", "D", "F"};
     map<string, vector<string>> funcsMap;
     map<string, set<string>> first;
@@ -46,10 +46,9 @@ public:
         v->push_back("TS");
         funcsMap["E"] = *v;
 
-        //E'->S
         v = new vector<string>();
         v->push_back("+TS");
-        //epsilon ->#
+        v->push_back("-TS");
         v->push_back("#");
         funcsMap["S"] = *v;
 
@@ -60,12 +59,13 @@ public:
 
         v = new vector<string>();
         v->push_back("*FD");
+        v->push_back("/FD");
         v->push_back("#");
         funcsMap["D"] = *v;
 
         v = new vector<string>();
         v->push_back("(E)");
-        v->push_back("i");
+        v->push_back("n");
         funcsMap["F"] = *v;
     }
 
@@ -273,7 +273,7 @@ public:
     }
 
     void printFollow() {
-        cout <<"follow:" <<endl;
+        cout << "follow:" << endl;
         for (const auto &i :follow) {
             cout << i.first << "->";
             for (const auto &j : i.second) {
@@ -285,7 +285,7 @@ public:
     }
 
     void printTable() {
-        cout << "table:" <<table.size() << endl;
+        cout << "table:" << table.size() << endl;
         for (auto i: table) {
             cout << "<" << i.first.N << "," << i.first.T << ">" << "->" << i.second.second << endl;
         }
